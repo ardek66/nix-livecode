@@ -1,7 +1,10 @@
 * Nix-Livecode
 This flake provides an overlay for setting up reproductible live coding environments using Nix.
-It packages SuperCollider Quarks that can be used together with `supercollider-with-plugins` like
-in this flake's `devShell`.
+
+It packages SuperCollider Quarks that can be used together with =supercollider-with-plugins= like
+in this flake's =devShell=.
+
+A TidalCycles package is also provided.
 
 * TODO
 - [ ] Clean up Quark JSON generation
