@@ -5,21 +5,16 @@ let
   json = fromJSON (readFile ./private/quarks.json);
   quarks = (foldl' (acc: quark:
     acc // {
-      ${quark.name} = prev.stdenv.mkDerivation {
-        name = quark.name;
-        version = quark.version;
-        author = quark.author;
-
-        buildInputs = [ prev.supercollider ];
+      ${quark.name} = prev.stdenv.mkDerivation rec {
+        inherit (quark) name;
         
         src = prev.fetchgit {
-          url = "${quark.src.url}";
-          sha256 = "${quark.src.sha256}";
+          inherit (quark.src) url rev sha256; 
         };
 
         installPhase = ''
-                       mkdir -p $out/share/SuperCollider/Extensions/${quark.name}
-                       cp -r * $out/share/SuperCollider/Extensions/${quark.name}
+                       mkdir -p $out/share/SuperCollider/Extensions/${name}
+                       cp -r * $out/share/SuperCollider/Extensions/${name}
                        '';
       };
     }) {} json.quarks);
@@ -28,7 +23,7 @@ in {
   
   supercollider-extra =
     prev.supercollider-with-plugins.override {
-      plugins = with final.supercolliderPlugins; [ sc3-plugins SuperDirt Vowel ];
+      plugins = with final.supercolliderPlugins; [ sc3-plugins API SuperDirt Vowel ];
     };
 
   ghc-with-tidal =
