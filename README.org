@@ -1,0 +1,14 @@
+* Nix-Livecode
+This flake provides an overlay for setting up reproductible live coding environments using Nix.
+It packages SuperCollider Quarks that can be used together with `supercollider-with-plugins` like
+in this flake's `devShell`.
+
+* TODO
+- [ ] Clean up Quark JSON generation
+- [ ] Automatically retrieve Quark dependencies
+- [ ] Add more live coding platforms:
+  - [ ] Extemporea
+  - [ ] Foxdot
+  - [ ] Overtone
+  - [ ] PurrData
+  - [ ] VCVRack
