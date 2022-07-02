@@ -40,11 +40,11 @@
           pkgs.haskellPackages.ghcWithPackages(p: [ p.tidal ]);
       };
 
-      devShells.default = pkgs.mkShell {
+      devShells.devel = pkgs.mkShell {
         buildInputs = with packages; [ nix-prefetch-git supercollider-devel ];
       };
 
-      devShells.tidal = pkgs.mkShell {
+      devShells.default = pkgs.mkShell {
         buildInputs = with packages;
           [ supercollider-tidal ghc-with-tidal ];
       };
