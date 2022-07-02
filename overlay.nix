@@ -7,7 +7,10 @@ let
       ${quark.name} =
         final.supercolliderPlugins.buildQuark {
           inherit (quark) name;
-          dependencies = quark.dependencies or [];
+
+          dependencies =
+            map (pkg: final.supercolliderPlugins.${pkg})
+              quark.dependencies or [];
 
           src = prev.fetchgit {
             inherit (quark.src) url rev sha256;
@@ -16,15 +19,14 @@ let
     }) {} (fromJSON (readFile ./private/quarks.json)));
 in {
   supercolliderPlugins = prev.supercolliderPlugins // {
-    buildQuark = { name, src, dependencies ? [] }:
+    buildQuark = { name, src, dependencies ? [], external ? [] }:
       let target = "share/SuperCollider/Extensions";
       in prev.stdenv.mkDerivation {
         inherit name src;
 
-        buildInputs =
-          map (pkg: final.supercolliderPlugins.${pkg})
-            dependencies;
-
+        buildInputs = dependencies;
+        propagatedBuildInputs = external;
+        
         installPhase =
           ''
           mkdir -p $out/${target}/${name}

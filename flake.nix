@@ -15,9 +15,25 @@
       }; in
     rec {
       packages = flake-utils.lib.flattenTree {
-        supercollider-extra =
+        nix-prefetch-git = pkgs.nix-prefetch-git;
+
+        nixQuarks =
+          pkgs.supercolliderPlugins.buildQuark {
+            name = "nixToQuark";
+            src = ./private;
+            dependencies = [ pkgs.supercolliderPlugins.API ];
+            external = [ packages.nix-prefetch-git ];
+        };
+
+        supercollider-devel =
           pkgs.supercollider-with-plugins.override {
-            plugins = with pkgs.supercolliderPlugins; [ sc3-plugins API SuperDirt ];
+            plugins = [ packages.nixQuarks ];
+          };
+
+        supercollider-tidal =
+          pkgs.supercollider-with-plugins.override {
+            plugins = with pkgs.supercolliderPlugins;
+              [ sc3-plugins SuperDirt ];
           };
 
         ghc-with-tidal =
@@ -25,8 +41,12 @@
       };
 
       devShells.default = pkgs.mkShell {
+        buildInputs = with packages; [ nix-prefetch-git supercollider-devel ];
+      };
+
+      devShells.tidal = pkgs.mkShell {
         buildInputs = with packages;
-          [ pkgs.nix-prefetch-git supercollider-extra ghc-with-tidal ];
+          [ supercollider-tidal ghc-with-tidal ];
       };
     });
 }
