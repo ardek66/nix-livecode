@@ -16,18 +16,22 @@ let
     }) {} (fromJSON (readFile ./private/quarks.json)));
 in {
   supercolliderPlugins = prev.supercolliderPlugins // {
-    buildQuark = { name, src, dependencies ? [] }: 
-      prev.stdenv.mkDerivation rec {
+    buildQuark = { name, src, dependencies ? [] }:
+      let target = "share/SuperCollider/Extensions";
+      in prev.stdenv.mkDerivation {
         inherit name src;
 
-        propagatedBuildInputs =
+        buildInputs =
           map (pkg: final.supercolliderPlugins.${pkg})
             dependencies;
 
         installPhase =
           ''
-          mkdir -p $out/share/SuperCollider/Extensions/${name}
-          cp -r * $out/share/SuperCollider/Extensions/${name}
+          mkdir -p $out/${target}/${name}
+          cp -r * $out/${target}/${name}
+          for dep in $buildInputs; do
+              ln -s $dep/${target}/* $out/${target}
+          done
           '';
       };
   }
