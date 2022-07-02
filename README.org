@@ -7,8 +7,8 @@ in this flake's =devShell=.
 A TidalCycles package is also provided.
 
 * TODO
-- [ ] Clean up Quark JSON generation
-- [ ] Automatically retrieve Quark dependencies
+- [X] Clean up Quark JSON generation
+- [X] Automatically retrieve Quark dependencies
 - [ ] Add more live coding platforms:
   - [ ] Extemporea
   - [ ] Foxdot

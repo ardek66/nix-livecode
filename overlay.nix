@@ -28,7 +28,7 @@ in {
         installPhase =
           ''
           mkdir -p $out/${target}/${name}
-          cp -r * $out/${target}/${name}
+          cp -ar * $out/${target}/${name}
           for dep in $buildInputs; do
               ln -s $dep/${target}/* $out/${target}
           done
