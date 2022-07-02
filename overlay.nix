@@ -2,35 +2,34 @@ with builtins;
 
 final: prev:
 let
-  json = fromJSON (readFile ./private/quarks.json);
   quarks = (foldl' (acc: quark:
     acc // {
-      ${quark.name} = prev.stdenv.mkDerivation rec {
-        inherit (quark) name;
+      ${quark.name} =
+        final.supercolliderPlugins.buildQuark {
+          inherit (quark) name;
+          dependencies = quark.dependencies or [];
 
-        src = prev.fetchgit {
-          inherit (quark.src) url rev sha256; 
+          src = prev.fetchgit {
+            inherit (quark.src) url rev sha256;
+          };
         };
+    }) {} (fromJSON (readFile ./private/quarks.json)));
+in {
+  supercolliderPlugins = prev.supercolliderPlugins // {
+    buildQuark = { name, src, dependencies ? [] }: 
+      prev.stdenv.mkDerivation rec {
+        inherit name src;
 
         propagatedBuildInputs =
-          if hasAttr "dependencies" quark
-          then map (pkg: final.supercolliderPlugins.${pkg}) quark.dependencies
-          else [];
+          map (pkg: final.supercolliderPlugins.${pkg})
+            dependencies;
 
-        installPhase = ''
-                       mkdir -p $out/share/SuperCollider/Extensions/${name}
-                       cp -r * $out/share/SuperCollider/Extensions/${name}
-                       '';
+        installPhase =
+          ''
+          mkdir -p $out/share/SuperCollider/Extensions/${name}
+          cp -r * $out/share/SuperCollider/Extensions/${name}
+          '';
       };
-    }) {} json.quarks);
-in {
-  supercolliderPlugins = prev.supercolliderPlugins // quarks;
-  
-  supercollider-extra =
-    prev.supercollider-with-plugins.override {
-      plugins = with final.supercolliderPlugins; [ sc3-plugins API Vowel SuperDirt ];
-    };
-
-  ghc-with-tidal =
-    prev.haskellPackages.ghcWithPackages(p: [ p.tidal ]);
+  }
+  // quarks;
 }

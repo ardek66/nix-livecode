@@ -39,19 +39,20 @@ NixQuarks {
 
 	*fetchAll {
 		arg path;
-		var l, f;
+		var l, f, result;
 
-		f = File(path, "w");
-		f.write("{" ++ "quarks".quote ++ ":");
-
+		result = "[";
 		Quarks.all.do({
 			arg item, i;
 			item.postln;
-			if (i > 0, { f.write(",") }, { f.write("[") });
-			f.write(NixQuarks.toNix(item));
+			if (i > 0, { result = result ++ "," });
+			result = result ++ NixQuarks.toNix(item);
 		});
 
-		f.write("]}");
+		result = result ++ "]";
+
+		f = File(path, "w");
+		f.write(result);
 		f.close;
 
 	}
