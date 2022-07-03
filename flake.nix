@@ -15,6 +15,8 @@
       }; in
     rec {
       packages = flake-utils.lib.flattenTree {
+        nix-prefetch-git = pkgs.nix-prefetch-git;
+        
         supercollider-devel =
           pkgs.supercollider-with-plugins (p: [ p.nixQuarks ]);
 
@@ -26,7 +28,7 @@
       };
 
       devShells.devel = pkgs.mkShell {
-        buildInputs = with packages; [ supercollider-devel ];
+        buildInputs = with packages; [ nix-prefetch-git supercollider-devel ];
       };
 
       devShells.default = pkgs.mkShell {

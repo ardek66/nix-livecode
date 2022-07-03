@@ -79,7 +79,6 @@ in {
       final.supercolliderPlugins.buildQuark {
             name = "nixToQuark";
             src = ./private;
-            buildInputs = [ prev.nix-prefetch-git ];
             propagatedBuildInputs = [ final.supercolliderPlugins.API ];
         };
 
