@@ -36,6 +36,8 @@ in {
       name = "supercollider-with-plugins";
 
       paths = [ final.supercollider
+                prev.supercolliderPlugins.sc3-plugins
+                
                 (prev.writeTextDir "share/SuperCollider/sclang_conf.yaml"
                   ''
                     includePaths:
