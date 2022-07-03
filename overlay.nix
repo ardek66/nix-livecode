@@ -17,11 +17,24 @@ let
           };
         };
     }) {} (fromJSON (readFile ./private/quarks.json)));
+
+  sclang-conf-yaml = ''
+          includePaths:
+            - $out/share/Quarks
+          excludePaths:
+              []
+          postInlineWarnings: false
+          excludeDefaultPaths: false\
+        '';
 in {
+  supercollider =
+    prev.supercollider.overrideAttrs (old: {
+      patches = old.patches ++ [ ./supercollider.patch ];
+    });
+  
   supercolliderPlugins = prev.supercolliderPlugins // {
     buildQuark = { name, src, dependencies ? [], external ? [] }:
-      let target = "share/SuperCollider/Extensions";
-      in prev.stdenv.mkDerivation {
+      prev.stdenv.mkDerivation {
         inherit name src;
 
         buildInputs = dependencies;
@@ -29,11 +42,16 @@ in {
         
         installPhase =
           ''
-          mkdir -p $out/${target}/${name}
-          cp -ar * $out/${target}/${name}
-          for dep in $buildInputs; do
-              ln -s $dep/${target}/* $out/${target}
+          mkdir -p $out/share/Quarks/${name}
+          cp -ar * $out/share/Quarks/${name}
+
+          for dep in $buildInputs
+          do
+            ln -s $dep/share/Quarks/* $out/share/Quarks
           done
+
+          mkdir -p $out/share/SuperCollider
+          echo "${sclang-conf-yaml}" >> $out/share/SuperCollider/sclang_conf.yaml
           '';
       };
   }

@@ -1,0 +1,17 @@
+diff --git a/common/SC_Filesystem_unix.cpp b/common/SC_Filesystem_unix.cpp
+index 52dc1fd2d..2d208ecdc 100644
+--- a/common/SC_Filesystem_unix.cpp
++++ b/common/SC_Filesystem_unix.cpp
+@@ -115,7 +115,11 @@ Path SC_Filesystem::defaultUserAppSupportDirectory() {
+     return p.empty() ? p : p / DOT_LOCAL / SHARE_DIR_NAME / SC_FOLDERNAME_APPLICATION_NAME;
+ }
+ 
+-Path SC_Filesystem::defaultUserConfigDirectory() {
++Path SC_Filesystem::defaultUserConfigDirectory() {  
++    const char* sc_data_dir = getenv("SC_DATA_DIR");
++    if (sc_data_dir)
++        return Path(sc_data_dir);
++    
+     const char* xdg_config_home = getenv("XDG_CONFIG_HOME");
+     if (xdg_config_home)
+         return Path(xdg_config_home) / SC_FOLDERNAME_APPLICATION_NAME;
