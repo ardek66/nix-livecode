@@ -21,7 +21,7 @@
           pkgs.supercollider-with-plugins (p: [ p.nixQuarks ]);
 
         supercollider-tidal =
-          pkgs.supercollider-with-plugins (p: [ p.Vowel p.SuperDirt ]);
+          pkgs.supercollider-with-plugins (p: [ p.SuperDirt ]);
 
         ghc-with-tidal =
           pkgs.haskellPackages.ghcWithPackages(p: [ p.tidal ]);
