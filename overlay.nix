@@ -52,7 +52,8 @@ in {
                   for exe in $out/bin/*; do
                       wrapProgram $exe \
                       --set SC_PLUGIN_DIR "$out/lib/SuperCollider/plugins" \
-                      --set SC_DATA_DIR   "$out/share/SuperCollider"
+                      --set SC_DATA_DIR "$out/share/SuperCollider" \
+                      --set SCLANG_CONF_PATH "$out/share/SuperCollider/sclang_conf.yaml"
                   done
                   '';
     };
