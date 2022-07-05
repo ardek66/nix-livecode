@@ -1,35 +1,122 @@
-diff --git a/common/SC_Filesystem_unix.cpp b/common/SC_Filesystem_unix.cpp
-index 52dc1fd2d..8ae736722 100644
---- a/common/SC_Filesystem_unix.cpp
-+++ b/common/SC_Filesystem_unix.cpp
-@@ -115,7 +115,7 @@ Path SC_Filesystem::defaultUserAppSupportDirectory() {
-     return p.empty() ? p : p / DOT_LOCAL / SHARE_DIR_NAME / SC_FOLDERNAME_APPLICATION_NAME;
- }
- 
--Path SC_Filesystem::defaultUserConfigDirectory() {
-+Path SC_Filesystem::defaultUserConfigDirectory() {  
-     const char* xdg_config_home = getenv("XDG_CONFIG_HOME");
-     if (xdg_config_home)
-         return Path(xdg_config_home) / SC_FOLDERNAME_APPLICATION_NAME;
 diff --git a/lang/LangSource/SC_LanguageConfig.cpp b/lang/LangSource/SC_LanguageConfig.cpp
-index f4b22c293..757432cd2 100644
+index f4b22c293..e430eb664 100644
 --- a/lang/LangSource/SC_LanguageConfig.cpp
 +++ b/lang/LangSource/SC_LanguageConfig.cpp
-@@ -207,7 +207,16 @@ bool SC_LanguageConfig::defaultLibraryConfig(bool standalone) {
+@@ -37,6 +37,7 @@ SC_LanguageConfig::Path SC_LanguageConfig::gConfigFile;
+ bool SC_LanguageConfig::gPostInlineWarnings = false;
+ 
+ SC_LanguageConfig* gLanguageConfig;
++SC_LanguageConfig* envLanguageConfig;
+ 
+ static const char* INCLUDE_PATHS = "includePaths";
+ static const char* EXCLUDE_PATHS = "excludePaths";
+@@ -132,9 +133,18 @@ static void processBool(const char* nodeName, YAML::Node& doc, const std::functi
+     }
+ }
+ 
+-bool SC_LanguageConfig::readLibraryConfigYAML(const Path& fileName, bool standalone) {
+-    freeLibraryConfig();
+-    gLanguageConfig = new SC_LanguageConfig();
++bool SC_LanguageConfig::readLibraryConfigYAML(const Path& fileName, bool standalone, bool env) {
++    if (env) {
++      freeLibraryConfig(envLanguageConfig);
++      envLanguageConfig = new SC_LanguageConfig();
++    }
++
++    if(envLanguageConfig)
++      gLanguageConfig = envLanguageConfig;
++    else {
++      freeLibraryConfig(gLanguageConfig);
++      gLanguageConfig = new SC_LanguageConfig();
++    }
+ 
+     using namespace YAML;
+     try {
+@@ -154,7 +164,7 @@ bool SC_LanguageConfig::readLibraryConfigYAML(const Path& fileName, bool standal
+         return true;
+     } catch (std::exception& e) {
+         postfl("Exception while parsing YAML config file: %s\n", e.what());
+-        freeLibraryConfig();
++        freeLibraryConfig(gLanguageConfig);
+         return false;
+     }
+ }
+@@ -198,7 +208,7 @@ bool SC_LanguageConfig::writeLibraryConfigYAML(const Path& fileName) {
+ }
+ 
+ bool SC_LanguageConfig::defaultLibraryConfig(bool standalone) {
+-    freeLibraryConfig();
++    freeLibraryConfig(gLanguageConfig);
+     gLanguageConfig = new SC_LanguageConfig();
+     gLanguageConfig->setExcludeDefaultPaths(standalone);
+     return true;
+@@ -206,35 +216,46 @@ bool SC_LanguageConfig::defaultLibraryConfig(bool standalone) {
+ 
  bool SC_LanguageConfig::readLibraryConfig(bool standalone) {
      bool configured = false;
++    bool envConfigured = false;
  
--    if (bfs::exists(gConfigFile))
 +    const char* sclangConfPath = getenv("SCLANG_CONF_PATH");
 +
 +    if(sclangConfPath) {
 +      const Path envConfigFile = Path(sclangConfPath);
 +
 +      if (bfs::exists(envConfigFile))
-+	configured = readLibraryConfigYAML(envConfigFile, standalone);
++	envConfigured = readLibraryConfigYAML(envConfigFile, standalone, true);
 +    }
 +    
-+    if (!configured && bfs::exists(gConfigFile))
-         configured = readLibraryConfigYAML(gConfigFile, standalone);
+     if (bfs::exists(gConfigFile))
+-        configured = readLibraryConfigYAML(gConfigFile, standalone);
++        configured = readLibraryConfigYAML(gConfigFile, standalone, false);
  
      if (!configured && !standalone) {
+         const Path userYamlConfigFile =
+             SC_Filesystem::instance().getDirectory(DirName::UserConfig) / SCLANG_YAML_CONFIG_FILENAME;
+ 
+         if (bfs::exists(userYamlConfigFile))
+-            configured = readLibraryConfigYAML(userYamlConfigFile, standalone);
++	    configured = readLibraryConfigYAML(userYamlConfigFile, standalone, false);
+ 
+         if (!configured) {
+             const Path globalYamlConfigFile = Path("/etc") / SCLANG_YAML_CONFIG_FILENAME;
+ 
+             if (bfs::exists(globalYamlConfigFile))
+-                configured = readLibraryConfigYAML(globalYamlConfigFile, standalone);
++	        configured = readLibraryConfigYAML(globalYamlConfigFile, standalone, false);
+         }
+     }
+ 
++    configured = configured || envConfigured;
+     if (!configured)
+         configured = SC_LanguageConfig::defaultLibraryConfig(standalone);
+ 
+     return configured;
+ }
+ 
+-void SC_LanguageConfig::freeLibraryConfig() {
+-    if (gLanguageConfig) {
+-        delete gLanguageConfig;
+-        gLanguageConfig = nullptr;
++void SC_LanguageConfig::freeLibraryConfig(SC_LanguageConfig* &config) {
++    if (config) {
++        delete config;
++        config = nullptr;
+     }
+ }
+ 
+diff --git a/lang/LangSource/SC_LanguageConfig.hpp b/lang/LangSource/SC_LanguageConfig.hpp
+index c7e7d0992..a0af1856c 100644
+--- a/lang/LangSource/SC_LanguageConfig.hpp
++++ b/lang/LangSource/SC_LanguageConfig.hpp
+@@ -64,9 +64,9 @@ public:
+     bool getExcludeDefaultPaths() const { return mExcludeDefaultPaths; }
+     void setExcludeDefaultPaths(bool value);
+ 
+-    static bool readLibraryConfigYAML(const Path&, bool standalone);
++    static bool readLibraryConfigYAML(const Path&, bool standalone, bool env);
+     static bool writeLibraryConfigYAML(const Path&);
+-    static void freeLibraryConfig();
++    static void freeLibraryConfig(SC_LanguageConfig* &config);
+     static bool defaultLibraryConfig(bool standalone);
+     static bool readLibraryConfig(bool standalone);
+ 
